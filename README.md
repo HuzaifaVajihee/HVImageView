@@ -9,7 +9,7 @@ Property named "topRightCorner" is a boolean value to set this corner will round
 Property named "bottomLeftCorner" is a boolean value to set this corner will round or not. By default it is true.
 Property named "bottomRightCorner" is a boolean value to set this corner will round or not. By default it is true.
 
-Example:-
+# Example:-
 
 <unique.solution.hvimageview.RoundedCornerImageView
         android:id="@+id/roundimage1"
