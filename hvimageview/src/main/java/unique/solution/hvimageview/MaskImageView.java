@@ -2,19 +2,23 @@ package unique.solution.hvimageview;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PorterDuff;
-import android.graphics.Region;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
+import android.graphics.drawable.BitmapDrawable;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 
 import androidx.annotation.StyleableRes;
 import androidx.appcompat.widget.AppCompatImageView;
 
-public class RoundedCornerImageView extends AppCompatImageView {
+public class MaskImageView extends AppCompatImageView {
     private Path hexagonPath;
     private Path hexagonBorderPath;
     private Path hexagonCornerPath;
@@ -22,65 +26,32 @@ public class RoundedCornerImageView extends AppCompatImageView {
 
     @StyleableRes
     int index0 = 0;
-    @StyleableRes
-    int index1 = 1;
-    @StyleableRes
-    int index2 = 2;
-    @StyleableRes
-    int index3 = 3;
-    @StyleableRes
-    int index4 = 4;
-    @StyleableRes
-    int index5 = 5;
+
+    int drawableImage;
+    int drawableMask;
+
+    Paint maskPaint;
+    Paint imagePaint;
+    Bitmap bitmap;
+    Bitmap maskbitmap;
+
+    Rect rect;
 
 
-    float cornerRadius;
-    Boolean topLeftCorner;
-    Boolean topRightCorner;
-    Boolean bottomLeftCorner;
-    Boolean bottomRightCorner;
-
-
-    public RoundedCornerImageView(Context context) {
+    public MaskImageView(Context context) {
         super(context);
         init();
     }
 
-    public RoundedCornerImageView(Context context, AttributeSet attrs) {
+    public MaskImageView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        int[] sets = {R.attr.roundCornerRadius,R.attr.topLeftCorner,R.attr.topRightCorner,R.attr.bottomLeftCorner,R.attr.bottomRightCorner};
+        int[] sets = {R.attr.mask};
         TypedArray typedArray = context.obtainStyledAttributes(attrs, sets);
-        //CharSequence cornerR = typedArray.getText(index0);
-        Boolean topLeft = typedArray.getBoolean(index1,true);
-        Boolean topRight = typedArray.getBoolean(index2,true);
-        Boolean bottomLeft = typedArray.getBoolean(index3,true);
-        Boolean bottomRight = typedArray.getBoolean(index4,true);
-
-//        if (cornerR == null)
-//        {
-//            cornerR = "0";
-//        }
-//
-//        cornerRadius = Float.parseFloat((String) cornerR);
-        topLeftCorner = topLeft;
-        topRightCorner = topRight;
-        bottomLeftCorner = bottomLeft;
-        bottomRightCorner = bottomRight;
-
-        cornerRadius = typedArray.getDimension(index0,0);
-
-
-        typedArray.recycle();
-
-        setCornerRadius(cornerRadius);
-        setTopLeftCorner(topLeftCorner);
-        setTopRightCorner(topRightCorner);
-        setBottomLeftCorner(bottomLeftCorner);
-        setBottomRightCorner(bottomRightCorner);
+        drawableMask = typedArray.getResourceId(index0,0);
         init();
     }
 
-    public RoundedCornerImageView(Context context, AttributeSet attrs, int defStyleAttr) {
+    public MaskImageView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init();
     }
@@ -94,26 +65,6 @@ public class RoundedCornerImageView extends AppCompatImageView {
         this.mBorderPaint.setStrokeCap(Paint.Cap.ROUND);
         this.mBorderPaint.setStrokeWidth(5f);
         this.mBorderPaint.setStyle(Paint.Style.STROKE);
-    }
-
-    public void setCornerRadius(float cornerRadius) {
-        this.cornerRadius = cornerRadius;
-    }
-
-    public void setBottomLeftCorner(Boolean bottomLeftCorner) {
-        this.bottomLeftCorner = bottomLeftCorner;
-    }
-
-    public void setBottomRightCorner(Boolean bottomRightCorner) {
-        this.bottomRightCorner = bottomRightCorner;
-    }
-
-    public void setTopLeftCorner(Boolean topLeftCorner) {
-        this.topLeftCorner = topLeftCorner;
-    }
-
-    public void setTopRightCorner(Boolean topRightCorner) {
-        this.topRightCorner = topRightCorner;
     }
 
     public void setRadius(float radius) {
@@ -180,6 +131,7 @@ public class RoundedCornerImageView extends AppCompatImageView {
             path.rLineTo(-width + rx,0);
         }
 
+
         if (topLeftCorner)
         {
             path.rQuadTo(-rx, 0, -rx, ry); //top-left corner
@@ -190,6 +142,7 @@ public class RoundedCornerImageView extends AppCompatImageView {
             path.rLineTo(-rx, 0);
             path.rLineTo(left, width - ry);
         }
+
 
         if (bottomLeftCorner)
         {
@@ -217,10 +170,39 @@ public class RoundedCornerImageView extends AppCompatImageView {
 
     @Override
     public void onDraw(Canvas c) {
-        c.drawPath(hexagonBorderPath, mBorderPaint);
-        c.clipPath(hexagonPath, Region.Op.INTERSECT);
-        c.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+//        c.drawPath(hexagonBorderPath, mBorderPaint);
+//        c.clipPath(hexagonPath, Region.Op.INTERSECT);
+//        c.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
         super.onDraw(c);
+
+        Rect srcRect = centerCropImage();
+        c.drawBitmap(bitmap,srcRect,rect,imagePaint);
+        c.drawBitmap(maskbitmap,null,rect,maskPaint);
+        c.restore();
+    }
+
+    public Rect centerCropImage()
+    {
+        //code to draw center crop image
+        int bitmapWidth = bitmap.getWidth();
+        int bitmapHeight = bitmap.getHeight();
+        int bitmapCenterX = bitmap.getWidth() / 2;
+        int bitmapCenterY = bitmap.getHeight() / 2;
+        int left = bitmapCenterX - (rect.width()/2);
+        int top =  bitmapCenterY - (rect.height() / 2);
+        int right = left + rect.width();
+        int bottom = top + rect.height();
+
+        if(bitmapHeight < rect.height())
+        {
+            top = 0;
+            bottom = bitmapHeight;
+            left = left + (rect.height() - bitmapHeight) / 2;
+            right = right - (rect.height() - bitmapHeight) / 2;
+        }
+
+        Rect srcRect = new Rect(left,top,right,bottom);
+        return  srcRect;
     }
 
     @Override
@@ -230,15 +212,34 @@ public class RoundedCornerImageView extends AppCompatImageView {
         int height = MeasureSpec.getSize(heightMeasureSpec);
         setMeasuredDimension(width, height);
         //calculatePath(Math.min(width / 2f, height / 2f) - 10f);
+        rect = new Rect(0,0,width,height);
 
-        //cornerRadius = convertDpToPixel(cornerRadius,getContext());
 
-        RoundedRect1(0,0,width,height,cornerRadius,cornerRadius,topLeftCorner,topRightCorner,bottomLeftCorner,bottomRightCorner);
+
+        maskPaint = new Paint();
+        maskPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_IN));
+        maskPaint.setAntiAlias(true);
+
+        imagePaint = new Paint();
+        imagePaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_OVER));
+
+//        bitmap = BitmapFactory.decodeResource(
+//                getResources(),
+//                drawableImage);
+
+        maskbitmap = BitmapFactory.decodeResource(
+                getResources(), drawableMask);
+
+
+        BitmapDrawable bitmapDrawable = (BitmapDrawable) this.getDrawable();
+        bitmap = bitmapDrawable.getBitmap();
+
+        //RoundedRect1(0,0,width,height,cornerRadius,cornerRadius,topLeftCorner,topRightCorner,bottomLeftCorner,bottomRightCorner);
     }
+
     public static float convertDpToPixel(float dp, Context context){
         return dp * ((float) context.getResources().getDisplayMetrics().densityDpi / DisplayMetrics.DENSITY_DEFAULT);
     }
-
 
     public static float convertPixelsToDp(float px, Context context){
         return px / ((float) context.getResources().getDisplayMetrics().densityDpi / DisplayMetrics.DENSITY_DEFAULT);

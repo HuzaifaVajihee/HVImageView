@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <declare-styleable name="RoundedCornerImageView">
-        <attr name="cornerRadius" format="string" />
+        <attr name="roundCornerRadius" format="dimension" />
         <attr name="topLeftCorner" format="boolean" />
         <attr name="topRightCorner" format="boolean" />
         <attr name="bottomLeftCorner" format="boolean" />
         <attr name="bottomRightCorner" format="boolean" />
+    </declare-styleable>
+    <declare-styleable name="MaskImageView">
+        <!-- crop Imageview's content same as mask -->
+        <attr name="mask" format="reference" />
     </declare-styleable>
 </resources>
