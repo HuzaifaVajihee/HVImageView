@@ -32,6 +32,7 @@ public class MaskImageView extends AppCompatImageView {
 
     Paint maskPaint;
     Paint imagePaint;
+    Paint layerPaint;
     Bitmap bitmap;
     Bitmap maskbitmap;
 
@@ -175,9 +176,13 @@ public class MaskImageView extends AppCompatImageView {
 //        c.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
         super.onDraw(c);
 
+        Bitmap icon = BitmapFactory.decodeResource(getContext().getResources(),
+            R.drawable.transparent_rectangle);
+
         Rect srcRect = centerCropImage();
         c.drawBitmap(bitmap,srcRect,rect,imagePaint);
         c.drawBitmap(maskbitmap,null,rect,maskPaint);
+        c.drawBitmap(icon,null,rect,layerPaint);
         c.save();
         c.restore();
     }
@@ -219,10 +224,14 @@ public class MaskImageView extends AppCompatImageView {
 
         maskPaint = new Paint();
         maskPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_IN));
+        //maskPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_IN));
         maskPaint.setAntiAlias(true);
 
         imagePaint = new Paint();
         imagePaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_OVER));
+
+        layerPaint = new Paint();
+        layerPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_OUT));
 
 //        bitmap = BitmapFactory.decodeResource(
 //                getResources(),
