@@ -178,7 +178,8 @@ public class MaskImageView extends AppCompatImageView {
         Rect srcRect = centerCropImage();
         c.drawBitmap(bitmap,srcRect,rect,imagePaint);
         c.drawBitmap(maskbitmap,null,rect,maskPaint);
-        //c.restore();
+        c.save();
+        c.restore();
     }
 
     public Rect centerCropImage()
